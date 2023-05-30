@@ -1,4 +1,5 @@
 import { performRequest } from "./fetchService"
+import { getUsers } from "./userService"
 
 
 export async function fetchBooks() {
@@ -20,3 +21,68 @@ export async function buyBooks(title, quantity) {
 
     return data 
 }
+
+export async function increaseBookOrder(event, books) {
+    const { value } = event.target;
+    console.log(value);
+    const updateOrder = books.map((book, i) => {
+      if (parseInt(value) === parseInt(i)) {
+        if (book.order < book.quantity) {
+          book.order++;
+          console.log(book);
+        }
+        return book;
+      } else {
+        return book;
+      }
+    });
+    return updateOrder;
+  }
+  export async function decreaseBookOrder(event, books) {
+    const { value } = event.target;
+    const updateOrder = books.map((book, i) => {
+      if (parseInt(value) === parseInt(i)) {
+        if (book.order > 0) {
+          book.order--;
+        }
+        return book;
+      } else {
+        return book;
+      }
+    });
+    return updateOrder;
+  }
+
+  export async function placeOrder(event, books) {
+    const { value } = event.target;
+    const order = books[value];
+  
+    const data = await buyBooks(order.title, order.order);
+    console.log(data);
+    if (data.message) {
+      const reRender = await fetchBooks();
+      reRender.books.forEach((book) => {
+        book.order = 0;
+      });
+      console.log(reRender);
+  
+      const reRenderUsers = await getUsers();
+  
+      alert("Purchase was successful");
+      return { data, reRender, reRenderUsers };
+    } else if (data.error === "Digital signing is invalid, request new token") {
+      alert("Session expired, please log in again");
+      return data;
+    } else {
+      const reRender = await fetchBooks();
+      reRender.books.forEach((book) => {
+        book.order = 0;
+      });
+      console.log(reRender);
+  
+      const reRenderUsers = await getUsers();
+  
+      alert("Something went wrong, please try again");
+      return { data, reRender, reRenderUsers };
+    }
+  }
