@@ -4,7 +4,7 @@ import {
     createRoutesFromElements,
     Route,
   } from "react-router-dom";
-  import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+  import { fireEvent, render, screen,} from "@testing-library/react";
 import Layout from "../components/Layout";
 import GuestView, {loader as guestLoader} from "./GuestView";
 
