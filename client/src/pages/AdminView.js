@@ -1,36 +1,81 @@
-import { redirect, useLoaderData } from "react-router-dom";
+import { redirect, useLoaderData, useNavigate } from "react-router-dom";
 import { buyBooks, fetchBooks, searchBooks } from "../service/bookService";
 import { useEffect, useState } from "react";
 import { parseJwt } from "../service/jwtService";
 import { actionDelete } from "../service/actionService";
-import AddEditBook from "../components/AddEditBook";
+import EditBook from "../components/EditBook";
+import AddBook from "../components/AddBook";
+import Users from "../components/Users";
+import Books from "../components/Books";
+import { getUsers } from "../service/userService";
+import UserAction from "../components/UserAction";
 
 export async function loader() {
     const token = sessionStorage.getItem("AuthToken")
-    const user = parseJwt(token)
-    if(!user) {
+    const decoded = parseJwt(token)
+    if(!decoded) {
         return redirect("/login")
-    }else if(user.role !== "ADMIN") {
+    }else if(decoded.role !== "ADMIN") {
        return redirect("/login")
-    } 
+    }else if (decoded.exp * 1000 < Date.now()) {
+      return redirect("/login");
+    }
     const loaderBooks = await fetchBooks();
-    loaderBooks.forEach(book => {
+    loaderBooks.books.forEach(book => {
         book.order = 0
     });
-  return loaderBooks
+    const loaderUsers = await getUsers()
+  return {loaderBooks, loaderUsers}
 }
 
+
+
 export default function AdminView() {
+  const navigate = useNavigate()
   const [editBook, setEditBook] = useState(null)
+  const [addBook, setAddBook] = useState(false)
   const [search, setSearch] = useState("");
   const [books, setBooks] = useState(null);
   const [bookElements, setBookElements] = useState(null);
+  const [toggleTable, setToggleTable] = useState(true)
+  const [users, setUsers] = useState(null)
+  const [userElements, setUserElements] = useState(null)
+  const [toggleAction, setToggleAction] = useState(false)
+  const [user, setUser ] = useState(null)
+  const [action, setAction] = useState(undefined)
+ 
   
-  let loaderBooks = useLoaderData();
+  let {loaderBooks, loaderUsers} = useLoaderData();
   
+
   useEffect(() => {
-    setBooks(loaderBooks);
-  }, [loaderBooks]);
+    setBooks(loaderBooks.books);
+    setUsers(loaderUsers)
+    sessionStorage.setItem("BooksVersion", loaderBooks.version) 
+  }, [loaderBooks, loaderUsers]);
+
+  useEffect(() => {
+
+    const interval = setInterval(async () => {
+      const newBooks = await fetchBooks()
+      const currentVersion = sessionStorage.getItem("BooksVersion")
+      if(newBooks.version.toString() !== currentVersion.toString()) {
+        for (let i = 0; i < newBooks.books.length; i++) {
+          if(books[i]) {
+            newBooks.books[i].order = books[i].order
+          } else {
+            newBooks.books[i].order = 0
+          }
+          
+        }
+        setBooks(newBooks.books)
+        sessionStorage.setItem("BooksVersion", newBooks.version)
+      }
+      
+    }, 10000);
+    return () => clearInterval(interval);
+
+  }, [books])
 
   function increaseOrder(event) {
     const { value } = event.target;
@@ -46,6 +91,7 @@ export default function AdminView() {
     });
     setBooks(updateOrder);
   }
+
   function decreaseOrder(event) {
     const { value } = event.target;
     const updateOrder = books.map((book, i) => {
@@ -68,17 +114,22 @@ export default function AdminView() {
 
     const data = await buyBooks(order.title, order.order)
     console.log(data)
-    const reRender = await fetchBooks()
-    reRender.forEach(book => {
-        book.order = 0
-      });
-    setBooks(reRender)
+    
     if(data.message) {
         alert("Purchase was successful")
-    }else {
+    } else if (data.error === `Digital signing is invalid, request new token`) {
+      navigate("/login")
+    } else {
         alert("Something went wrong")
     } 
     
+    const reRender = await fetchBooks()
+          reRender.books.forEach(book => {
+              book.order = 0
+            });
+        setBooks(reRender.books)
+        const reRenderUsers = await getUsers()
+        setUsers(reRenderUsers)
   }
 
   async function deleteBook(event) {
@@ -89,10 +140,10 @@ export default function AdminView() {
     const data = await actionDelete(order.title)
     console.log(data)
     const reRender = await fetchBooks()
-    reRender.forEach(book => {
+    reRender.books.forEach(book => {
         book.order = 0
       });
-    setBooks(reRender)
+    setBooks(reRender.books)
     
   }
 
@@ -101,6 +152,15 @@ export default function AdminView() {
     const book = books[value]
     setEditBook(book)
 
+  }
+
+  function handleUserAction(event) {
+    const { value, name } = event.target
+    
+    const user = users[value]
+    setAction(name)
+    setUser(user)
+    setToggleAction(true)
   }
 
   useEffect(() => {
@@ -125,15 +185,43 @@ export default function AdminView() {
       );
     });
     setBookElements(mappedBooks);
-    // eslint-disable-next-line
-  }, [books, editBook]);
+    if(users !== null) {
+        const mappedUsers = users?.map((user, index) => {
+        return (
+          <tr key={index}>
+            <td>{user.username}</td>
+            <td>{user.role}</td>
+            <td>{user.purchases ? user.purchases.length : 0}</td>
+            <td>
+              <button disabled={user.username === parseJwt(sessionStorage.getItem("AuthToken")).username} 
+              name="promote" 
+              value={index} 
+              onClick={handleUserAction}>Promote</button>
 
-   function handleChange(event) {
+              <button disabled={user.username === parseJwt(sessionStorage.getItem("AuthToken")).username} 
+              name="delete" 
+              value={index} 
+              onClick={handleUserAction}>Delete</button>
+            </td>
+          </tr>
+        )
+      })
+      setUserElements(mappedUsers)
+    }
+    
+    // eslint-disable-next-line
+  }, [books, editBook, users]);
+
+  async function handleChange(event) {
     const { value } = event.target;
     setSearch(value);
     
     if (value === "") {
-       setBooks(loaderBooks)
+       const data = await fetchBooks()
+       data.books.forEach(book => {
+        book.order = 0
+      });
+       setBooks(data.books)
     }
   }
 
@@ -149,6 +237,7 @@ export default function AdminView() {
 
   return (
     <>
+      <div className="controller-container">
       <input
         className="search-input"
         type="search"
@@ -156,20 +245,18 @@ export default function AdminView() {
         onKeyDown={handleKeyDown}
         onChange={handleChange}
       />
-      <table data-testid="book-table" className="book-table">
-        <thead>
-          <tr>
-            <th className="table-header">Book title</th>
-            <th className="table-header">Book author</th>
-            <th className="table-header">Availability</th>
-            <th className="table-header">Order</th>
-            <th className="table-header">Action</th>
+      <button className="add-book-btn" onClick={() => setAddBook(true)}>Add new book</button>
 
-          </tr>
-        </thead>
-        <tbody>{bookElements}</tbody>
-      </table>
-        {editBook && <AddEditBook book={editBook} toggle={setEditBook} render={setBooks} />}
+      <div className="btn-container">
+        <button onClick={() => setToggleTable(true)} className="book-btn">Books</button>
+        <button onClick={() => setToggleTable(false)} className="user-btn">Users</button>
+      </div>
+      </div>
+      {toggleAction && <UserAction user={user} setUsers={setUsers} toggle={setToggleAction} action={action} />}
+      {toggleTable && <Books bookElements={bookElements} />}
+      {!toggleTable && <Users userElements={userElements}/>}
+        {addBook && <AddBook toggle={setAddBook} render={setBooks} />}
+        {editBook && <EditBook book={editBook} toggle={setEditBook} render={setBooks} />}
     </>
   );
 }

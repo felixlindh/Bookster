@@ -1,4 +1,4 @@
-import { redirect, useLoaderData } from "react-router-dom";
+import { redirect, useLoaderData, useNavigate } from "react-router-dom";
 import { buyBooks, fetchBooks, searchBooks } from "../service/bookService";
 import { useEffect, useState } from "react";
 import { parseJwt } from "../service/jwtService";
@@ -10,13 +10,14 @@ export async function loader() {
        return redirect("/login")
     } 
     const loaderBooks = await fetchBooks();
-    loaderBooks.forEach(book => {
+    loaderBooks.books.forEach(book => {
         book.order = 0
     });
   return loaderBooks
 }
 
 export default function UserView() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState("");
   const [books, setBooks] = useState(null);
   const [bookElements, setBookElements] = useState(null);
@@ -24,8 +25,32 @@ export default function UserView() {
   let loaderBooks = useLoaderData();
   
   useEffect(() => {
-    setBooks(loaderBooks);
+    setBooks(loaderBooks.books);
+    sessionStorage.setItem("BooksVersion", loaderBooks.version) 
   }, [loaderBooks]);
+
+  useEffect(() => {
+
+    const interval = setInterval(async () => {
+      const newBooks = await fetchBooks()
+      const currentVersion = sessionStorage.getItem("BooksVersion")
+      if(newBooks.version.toString() !== currentVersion.toString()) {
+        for (let i = 0; i < newBooks.books.length; i++) {
+          if(books[i]) {
+            newBooks.books[i].order = books[i].order
+          } else {
+            newBooks.books[i].order = 0
+          }
+          
+        }
+        setBooks(newBooks.books)
+        sessionStorage.setItem("BooksVersion", newBooks.version)
+      }
+      
+    }, 10000);
+    return () => clearInterval(interval);
+
+  }, [books])
 
   function increaseOrder(event) {
     const { value } = event.target;
@@ -63,46 +88,55 @@ export default function UserView() {
 
     const data = await buyBooks(order.title, order.order)
     console.log(data)
-    const reRender = await fetchBooks()
-    reRender.forEach(book => {
-        book.order = 0
-      });
-    setBooks(reRender)
+    
     if(data.message) {
         alert("Purchase was successful")
-    }else {
+    } else if (data.error === `Digital signing is invalid, request new token`) {
+      navigate("/login")
+    } else {
         alert("Something went wrong")
     } 
     
+    const reRender = await fetchBooks()
+          reRender.books.forEach(book => {
+              book.order = 0
+            });
+        setBooks(reRender.books)
   }
 
   useEffect(() => {
+    if(books !== null) {
+      const mappedBooks = books?.map((book, index) => {
+        return (
+          <tr key={index}>
+            <td>{book.title}</td>
+            <td>{book.author}</td>
+            <td>{book.quantity === 0 ? "Out of stock" : book.quantity + " left"}</td>
+            <td className="order-td">
+              <button data-testid="decrease" disabled={book.quantity === 0} value={index} onClick={decreaseOrder}>-</button>
+              <div>{book.order}</div>
+              <button data-testid="increase" disabled={book.quantity === 0} onClick={increaseOrder} value={index}>+</button>
+              <button disabled={book.quantity === 0} value={index} onClick={orderBooks}>Order</button>
+            </td>
+          </tr>
+        );
+      });
+      setBookElements(mappedBooks);
+    }
     
-    const mappedBooks = books?.map((book, index) => {
-      return (
-        <tr key={index}>
-          <td>{book.title}</td>
-          <td>{book.author}</td>
-          <td>{book.quantity === 0 ? "Out of stock" : book.quantity + " left"}</td>
-          <td className="order-td">
-            <button data-testid="decrease" disabled={book.quantity === 0} value={index} onClick={decreaseOrder}>-</button>
-            <div>{book.order}</div>
-            <button data-testid="increase" disabled={book.quantity === 0} onClick={increaseOrder} value={index}>+</button>
-            <button disabled={book.quantity === 0} value={index} onClick={orderBooks}>Order</button>
-          </td>
-        </tr>
-      );
-    });
-    setBookElements(mappedBooks);
     // eslint-disable-next-line
   }, [books]);
 
-   function handleChange(event) {
+  async function handleChange(event) {
     const { value } = event.target;
     setSearch(value);
     
     if (value === "") {
-       setBooks(loaderBooks)
+       const data = await fetchBooks()
+       data.books.forEach(book => {
+        book.order = 0
+      });
+       setBooks(data.books)
     }
   }
 
@@ -119,7 +153,7 @@ export default function UserView() {
   return (
     <>
       <input
-        className="search-input"
+        className="userview-input"
         type="search"
         placeholder="Search..."
         onKeyDown={handleKeyDown}

@@ -14,3 +14,11 @@ const data = await resp.json()
 
 return data 
 }
+
+export async function actionAdd(body) {
+    const resp = await performRequest("http://127.0.0.1:4000/admin/books", "POST", body)
+    const data = await resp.json()
+
+    return data 
+}
+

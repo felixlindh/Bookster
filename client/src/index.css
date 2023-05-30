@@ -158,13 +158,15 @@ td, th {
   justify-content: space-between;
 }
 
-.search-input {
+.search-input, .userview-input {
   height: 2em;
   border-radius: 1em;
   border: 1px solid #111;
-  padding: 0.5em;
-  margin-top: 1em;
+  padding: 0.8em;
+}
+.userview-input {
   margin-left: 10%;
+  margin-top: 1em;
 }
 
 .edit-container{
@@ -197,6 +199,34 @@ td, th {
 
 button {
   cursor: pointer;
+}
+
+.add-book-btn {
+  background-color: #2176ae;
+  color: white;
+  padding: 1em;
+  border-radius: 10px;
+}
+
+.btn-container {
+  display: inline-block;
+}
+
+.book-btn, .user-btn {
+  background-color: #2176ae;
+  color: white;
+  padding: 1em;
+}
+
+.controller-container {
+  width: 80%;
+  margin: 1em auto;
+  display: flex;
+  justify-content: space-between;
+}
+
+.user-action {
+  font-weight: bold;
 }
 
 

@@ -7,9 +7,12 @@ import {
     Route,
   } from "react-router-dom";
 import Layout from "../components/Layout";
+import { loginUser } from "../service/authService";
   
 
 test("Check if book table i rendered",async () => {
+  const resp = await loginUser({username: "Yves", password: "123"})
+  sessionStorage.setItem("AuthToken", resp.accessToken)
     const router = createBrowserRouter(
         createRoutesFromElements(
           <Route path="/" element={<Layout />}>

@@ -38,7 +38,7 @@ export default function Login() {
                 <input data-testid="password-field" name="password" type="password" placeholder="Password" />
                 <button className="login-btn" data-testid="login-btn">Log in</button>
             </Form>
-            <button onClick={() => navigate("/guest")} className="guest-btn">Proceed as guest user</button>
+            <button onClick={() => navigate("/")} className="guest-btn">Proceed as guest user</button>
             <p>No account? Sign up <span><Link to="/register">here</Link></span></p>
 
         </div>

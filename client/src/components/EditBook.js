@@ -3,7 +3,7 @@ import { actionEdit } from "../service/actionService";
 import { fetchBooks } from "../service/bookService";
 
 
-export default function AddEditBook({book, toggle, render}) {
+export default function EditBook({book, toggle, render}) {
     const [inputValues, setInputValues] = useState({
         title: book.title,
         author: book.author,
@@ -24,10 +24,10 @@ export default function AddEditBook({book, toggle, render}) {
         console.log(data)
         if(data.message === 'book updated successfully') {
             const reRender = await fetchBooks()
-            reRender.forEach(book => {
+            reRender.books.forEach(book => {
                 book.order = 0
             });
-            render(reRender)
+            render(reRender.books)
             alert(`Succesfully edited the book: ${inputValues.title}`)
             toggle(null)
         } else {
