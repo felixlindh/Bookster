@@ -1,6 +1,8 @@
+/**UsersTable Component
+ * In this file we recieve all the users as a prop and proceed to render them out on the screen
+ */
 
-
-export default function Users({userElements}) {
+export default function UsersTable({userElements}) {
 
     return (
         <table data-testid="book-table" className="book-table">

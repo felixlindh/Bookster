@@ -1,3 +1,9 @@
+/** GuestView Component
+ * This component will render if you browse as a guest (not logged in)
+ * We display all the books on this page through smaller components
+ * When enterting this page we recieve all the Books from our "loader"
+ * This component uses short polling to rerender the content on the page if it recieves a new data(version number)
+ */
 import { useLoaderData } from "react-router-dom";
 import { fetchBooks, searchBooks } from "../service/bookService";
 import { useEffect, useState } from "react";
@@ -15,6 +21,29 @@ export default function GuestView() {
   useEffect(() => {
     setBooks(loaderBooks.books);
   }, [loaderBooks]);
+
+  useEffect(() => {
+
+    const interval = setInterval(async () => {
+      const newBooks = await fetchBooks()
+      const currentVersion = sessionStorage.getItem("BooksVersion")
+      if(newBooks.version.toString() !== currentVersion.toString()) {
+        for (let i = 0; i < newBooks.books.length; i++) {
+          if(books[i]) {
+            newBooks.books[i].order = books[i].order
+          } else {
+            newBooks.books[i].order = 0
+          }
+          
+        }
+        setBooks(newBooks.books)
+        sessionStorage.setItem("BooksVersion", newBooks.version)
+      }
+      
+    }, 10000);
+    return () => clearInterval(interval);
+
+  }, [books])
 
   useEffect(() => {
     

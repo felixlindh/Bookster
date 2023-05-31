@@ -1,3 +1,9 @@
+/** Login Component
+ * This component uses a custom action when the form is submitted.
+ * If the user enters the correct credentials a JWT will be stored in SessionStorage
+ * User is redirected to the next page based on the role parsed from the JWT
+ * If the user enters the wrong credentials an errorMessage is displayed for good UX
+ */
 import { Form, Link, redirect, useActionData, useNavigate } from "react-router-dom"
 import { loginUser } from "../service/authService"
 import { parseJwt } from "../service/jwtService"

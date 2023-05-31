@@ -1,3 +1,6 @@
+/**UserAction Component
+ * As an admin when you click delete or promote user this component renders
+ */
 import { actionDeleteUser, actionPromoteUser, getUsers } from "../service/userService"
 
 

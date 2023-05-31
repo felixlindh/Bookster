@@ -1,3 +1,7 @@
+/**
+ * parseJwt is used to decode JWT.
+ */
+
 export function parseJwt(token) {
     if (!token) {
       return;

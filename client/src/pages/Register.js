@@ -1,4 +1,9 @@
-import { Form, Link, redirect, useActionData, useNavigate } from "react-router-dom"
+/** Register Component
+ * This component uses a custom action when the form is submitted.
+ * This component is used to create a new account
+ * If the user enters the wrong credentials an errorMessage is displayed for good UX
+ */
+import { Form, Link, redirect, useActionData } from "react-router-dom"
 import { registerUser } from "../service/authService"
 
 

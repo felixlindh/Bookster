@@ -1,3 +1,6 @@
+/** Header component 
+ * With the help of JWT we display wich user is currently logged in 
+ */
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { parseJwt } from "../service/jwtService"
