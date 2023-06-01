@@ -23,7 +23,6 @@ export default function AddBook({toggle, render}) {
 
     async function saveChanges() {
         const data = await actionAdd(inputValues)
-        console.log(data)
         if(data.message === 'book added successfully') {
             data.context.books.forEach(book => {
                 book.order = 0

@@ -3,7 +3,7 @@ import { fetchBooks } from "./bookService";
 export async function polling(books) {
   const newBooks = await fetchBooks();
   const currentVersion = sessionStorage.getItem("BooksVersion");
-  console.log(newBooks, currentVersion);
+  
   if (String(newBooks.version) !== String(currentVersion)) {
     for (let i = 0; i < newBooks.books.length; i++) {
       if (books[i]) {

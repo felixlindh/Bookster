@@ -63,9 +63,9 @@ export default function AdminView() {
   }, [loaderBooks, loaderUsers]);
 
   useEffect(() => {
+    // Polling to check for new versions
     const interval = setInterval(async () => {
       const newVersion = await polling(books);
-      console.log(newVersion);
       setBooks(newVersion);
     }, 10000);
     return () => clearInterval(interval);

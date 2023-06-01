@@ -13,13 +13,10 @@ export async function action({ request }) {
     const username = formData.get("username")
     const password = formData.get("password")
 
-    console.log(username, password)
-
     try {
         const data = await loginUser({ username, password })
         sessionStorage.setItem("AuthToken", data.accessToken)
         const decoded = parseJwt(data.accessToken)
-        console.log(decoded)
         if(decoded.role === "ADMIN") {
             return redirect("/admin")
         }

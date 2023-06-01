@@ -18,7 +18,7 @@ test("Entering wrong credentials displays an error message", async () => {
   );
   render(<RouterProvider router={router} />);
 
-  const username = "Bob";
+  const username = "Greta";
   const password = "1234";
 
   const loginBtn = screen.getByTestId("login-btn");
